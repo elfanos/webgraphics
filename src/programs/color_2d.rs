@@ -1,8 +1,15 @@
 use super::super::common_funcs as cf;
 use js_sys::WebAssembly;
+use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::WebGlRenderingContext as GL;
 use web_sys::*;
+
+#[wasm_bindgen]
+extern "C" {
+	#[wasm_bindgen(js_namespace = console)]
+	fn log(s: &str);
+}
 
 pub struct Color2D {
 	program: WebGlProgram,
@@ -45,11 +52,7 @@ impl Color2D {
 		let buffer_rect = gl.create_buffer().ok_or("failed to create buffer").unwrap();
 
 		gl.bind_buffer(GL::ARRAY_BUFFER, Some(&buffer_rect));
-		gl.buffer_data_with_array_buffer_view(
-			GL::ARRAY_BUFFER,
-			&vert_array,
-			GL::STATIC_DRAW,
-		);
+		gl.buffer_data_with_array_buffer_view(GL::ARRAY_BUFFER, &vert_array, GL::STATIC_DRAW);
 		Self {
 			u_color: gl.get_uniform_location(&program, "uColor").unwrap(),
 			u_opacity: gl.get_uniform_location(&program, "uOpacity").unwrap(),
@@ -59,6 +62,7 @@ impl Color2D {
 			program,
 		}
 	}
+
 	pub fn render(
 		&self,
 		gl: &WebGlRenderingContext,
@@ -83,21 +87,45 @@ impl Color2D {
 		);
 
 		gl.uniform1f(Some(&self.u_opacity), 1.);
-		let translation_matrix = cf::translation_matrix(
-			2. * left / canvas_width - 1.,
-			2. * bottom / canvas_height - 1.,
-			0.,
-		);
 
-		let scale_matrix = cf::scaling_matrix(
+		// nex x axis translation
+		let new_x_translation = cf::get_x_translation(canvas_width, 600., 600.);
+
+		let scaling = canvas_height / 20.;
+
+		// nex x axis translation
+		let new_y_translation = cf::get_y_translation(canvas_height,3.);
+
+
+		// leader
+		// should have the correct
+		let translations_x = format!("test colio {:?}  {:?}", new_x_translation,new_y_translation);
+		log(&translations_x);
+		let x_origin_translation = 2. * new_x_translation / canvas_width - 1.; // x translation
+
+		let y_origin_translation = 2. * new_y_translation / canvas_height - 1.;
+
+		let translation_matrix =
+			cf::translation_matrix(x_origin_translation, y_origin_translation, 0.);
+
+		let scaling_4d_matrix = cf::scaling_matrix_4x4(
 			2. * (right - left) / canvas_width,
 			2. * (top - bottom) / canvas_height,
 			0.,
 		);
 
-		let transform_mat = cf::mult_matrix_4(scale_matrix, translation_matrix);
+		let transform_4d_mat = cf::mult_2d_matrix_4x4(scaling_4d_matrix, translation_matrix);
 
-		gl.uniform_matrix4fv_with_f32_array(Some(&self.u_transform), false, &transform_mat);
+		let together = format!(
+			"test colio {:?}  {:?} {:?}  {:?} ",
+			2. * left / canvas_width - 1.,
+			2. * bottom / canvas_height - 1.,
+			bottom,
+			canvas_height
+		);
+		log(&together);
+
+		gl.uniform_matrix4fv_with_f32_array(Some(&self.u_transform), false, &transform_4d_mat);
 
 		gl.draw_arrays(GL::TRIANGLES, 0, (self.rect_vertice_ary_len / 2) as i32);
 	}
