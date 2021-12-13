@@ -1,2 +1,2 @@
 pub mod game_box;
-pub mod position;
+pub use game_box::*;
