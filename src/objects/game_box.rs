@@ -1,5 +1,3 @@
-use super::super::coordinates as Coordinates_fun;
-
 #[derive(Copy, Clone)]
 pub struct Position {
 	pub top: f32,
@@ -21,16 +19,31 @@ pub struct GameBox {
 	pub size: f32,
 	pub position: Position,
 	pub horse_position: HorsePosition,
+	pub distance_to_point: f32,
+	pub distance_to_point_y: f32,
 }
 
 impl GameBox {
-	pub fn new(height: f32, width: f32, scale: f32, horse_position: HorsePosition) -> Self {
+	pub fn new(
+		height: f32,
+		width: f32,
+		scale: f32,
+		distance_to_point: f32,
+		distance_to_point_y: f32,
+		horse_position: HorsePosition,
+	) -> Self {
+
 		let size = box_size(height, width, scale);
 		Self {
 			size,
 			position: box_position_in_plane(height, width, size),
 			horse_position,
+			distance_to_point,
+			distance_to_point_y,
 		}
+	}
+	pub fn move_box(&mut self, velocity: f32) {
+		self.distance_to_point = self.distance_to_point + velocity
 	}
 }
 
@@ -50,4 +63,27 @@ pub fn box_position_in_plane(height: f32, width: f32, size: f32) -> Position {
 		right: half_width + size,
 		left: half_width - size,
 	}
+}
+
+pub fn move_horse(distance_covered: f32, velocity: f32) -> f32 {
+	distance_covered + velocity
+}
+
+
+/**
+ * Using distance/time = velocity then to calculate unit per frame velocity/(fps => 1000 / 60 or 1000 / 30) = units per frame based on the speed
+ *
+ */
+pub fn get_next_x_y_with_velocity(distance: f32, time: f32, fps: f32) -> f32 {
+    let units_per_frame = (distance / time) * fps;
+    units_per_frame
+}
+pub fn get_leader_translation(boxes: &Vec<GameBox>) -> f32 {
+    let mut leader = 0.;
+    for x in boxes {
+        if leader < x.horse_position.distance_covered {
+            leader = x.horse_position.distance_covered;
+        }
+    }
+    leader
 }

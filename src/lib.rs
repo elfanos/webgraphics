@@ -1,6 +1,7 @@
 extern crate serde_json;
 extern crate wasm_bindgen;
-use objects::GameBox as GameBox2d;
+use coordinates as Coordinates;
+use objects::{GameBox as GameBox2d, MatrixtTranslation};
 use programs::GameBox;
 use wasm_bindgen::prelude::*;
 use web_sys::WebGlRenderingContext as GL;
@@ -29,6 +30,7 @@ extern "C" {
 pub struct Client {
     gl: WebGlRenderingContext,
     program_game_box: GameBox,
+    run: bool,
 }
 
 #[wasm_bindgen]
@@ -40,6 +42,7 @@ impl Client {
         Self {
             program_game_box: GameBox::new(&gl),
             gl,
+            run: false,
         }
     }
 
@@ -58,25 +61,82 @@ impl Client {
     pub fn render(&self) {
         self.gl.clear(GL::COLOR_BUFFER_BIT | GL::DEPTH_BUFFER_BIT);
         let curr_state = app_state::get_curr_state();
-        let leader = get_leader_translation(&curr_state.boxes);
-        for box_2d in &curr_state.boxes {
-            self.program_game_box.render(
-                &self.gl,
-                curr_state.canvas_height,
-                curr_state.canvas_width,
-                box_2d,
-                leader,
-            );
-        }
-    }
-}
+        let leader = Coordinates::get_race_leader(&curr_state.boxes);
+        let prev_leader = Coordinates::get_race_leader(&curr_state.prev_boxes);
 
-pub fn get_leader_translation(boxes: &Vec<GameBox2d>) -> f32 {
-    let mut leader = 0.;
-    for x in boxes {
-        if leader < x.horse_position.distance_covered {
-            leader = x.horse_position.distance_covered;
+        let box_2d = &curr_state.boxes[0];
+        let prev_box_2d = curr_state.prev_boxes.get(0);
+        // let frame_string = format!(
+        //     "current frame {}",
+        //     curr_state.frame,
+        // );
+        // log(&frame_string);
+
+        // match prev_box_2d {
+        //     None => println!("i"),
+        //     Some(prev_box_2d) => {
+        //         let new_tarnslation = get_vector_point(
+        //             curr_state.canvas_width,
+        //             curr_state.canvas_height,
+        //             box_2d.horse_position.distance_covered,
+        //             box_2d.horse_position.distance_from_inner_lane,
+        //             leader,
+        //         );
+
+        //         let old_tarnslation = get_vector_point(
+        //             curr_state.canvas_width,
+        //             curr_state.canvas_height,
+        //             prev_box_2d.horse_position.distance_covered,
+        //             prev_box_2d.horse_position.distance_from_inner_lane,
+        //             leader,
+        //         );
+
+        //             // let test = format!(
+        //             //     "x difference in translation = {} and distance from inner lane {}",
+        //             //     prev_box_2d.distance_to_point_y,
+        //             //     box_2d.horse_position.distance_from_inner_lane
+        //             // );
+        //             // log(&test);
+        //         self.program_game_box.render(
+        //             &self.gl,
+        //             curr_state.canvas_height,
+        //             curr_state.canvas_width,
+        //             box_2d,
+        //             get_vector_point_in_plane(
+        //                 curr_state.canvas_width,
+        //                 curr_state.canvas_height,
+        //                 prev_box_2d.distance_to_point,
+        //                 prev_box_2d.distance_to_point_y,
+        //                 prev_leader,
+        //             ),
+        //         );
+        //     }
+        // }
+
+        for box_2d in &curr_state.boxes {
+            let prev_box_2d = curr_state
+                .prev_boxes
+                .clone()
+                .into_iter()
+                .find(|&x| x.horse_position.horse_number == box_2d.horse_position.horse_number);
+            match prev_box_2d {
+                None => println!("!"),
+                Some(prev_box_2d) => {
+                    self.program_game_box.render(
+                        &self.gl,
+                        curr_state.canvas_height,
+                        curr_state.canvas_width,
+                        box_2d,
+                        Coordinates::get_vector_point_in_plane(
+                            curr_state.canvas_width,
+                            curr_state.canvas_height,
+                            prev_box_2d.distance_to_point,
+                            prev_box_2d.distance_to_point_y,
+                            prev_leader,
+                        ),
+                    );
+                }
+            }
         }
     }
-    leader
 }

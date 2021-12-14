@@ -16,7 +16,7 @@ const rust = import("./pkg/rust_3d_demo");
 
 const testData = [
   [
-  [3, 2166.98, 2.29, 483.92],
+  [3, 2166.98, 1.29, 483.92],
   [2, 2266.71, 0.91, 390.77],
   [12, 2194.84, 2.03, 794.87],
   [7, 2151.17, 3.55, 506.67],
@@ -30,7 +30,7 @@ const testData = [
   [4, 2187.12, 1.49, 458.29],
 ],
 [
-  [3, 2166.98, 4.29, 700.92],
+  [3, 2166.98, 8.29, 700.92],
   [2, 2266.71, 2.91, 567.77],
   [12, 2194.84, 0.03, 870.87],
   [7, 2151.17, 2.55, 600.67],
@@ -65,39 +65,19 @@ rust
 
     const client = new m.Client();
     const initialTime = performance.now();
+    let indexdos = 1;
+    let data = testData[0];
 
+    window.setInterval(() => {
+        data=testData[indexdos]
+        indexdos = indexdos === 0 ? 1 : 0;
+    }, 1000);
+    // client.update(0, window.innerHeight, window.innerWidth, testData[1]);
+    // client.run();
     function render() {
       let index = 0;
-      window.setInterval(() => {
-        window.requestAnimationFrame(() => {
-          canvas.height = window.innerHeight;
-          canvas.clientHeight = window.innerHeight;
-          canvas.style.height = window.innerHeight;
-
-          canvas.width = window.innerWidth;
-          canvas.clientWidth = window.innerWidth;
-          canvas.style.width = window.innerWidth;
-
-          gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-
-          client.update(0, window.innerHeight, window.innerWidth, testData[index]);
-
-          index = index === 0 ? 1 : 0;
-
-
-          client.render();
-        });
-      }, 1000);
-
-      // window.requestAnimationFrame(render);
-      // const currentTime = performance.now();
-      // if (currentTime > lastDrawItem + FPS_THROTTLE) {
-      //   lastDrawItem = currentTime;
-      //   // rust update call
-      //   if (
-      //     window.innerHeight !== canvas.height ||
-      //     window.innerWidth !== canvas.width
-      //   ) {
+      // window.setInterval(() => {
+      //   window.requestAnimationFrame(() => {
       //     canvas.height = window.innerHeight;
       //     canvas.clientHeight = window.innerHeight;
       //     canvas.style.height = window.innerHeight;
@@ -107,15 +87,42 @@ rust
       //     canvas.style.width = window.innerWidth;
 
       //     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
-      //   }
-      //   let elapsedTime = currentTime - initialTime;
-      //   client.update(elapsedTime, window.innerHeight, window.innerWidth, [
-      //     [3, 2145.05, 1.52, 505.79],
-      //     [7, 2145.05, 1.52, 432.79],
-      //     [1, 2145.05, 1.52, 654.79],
-      //   ]);
-      //   client.render();
-      // }
+
+      //     client.update(0, window.innerHeight, window.innerWidth, testData[index]);
+
+      //     index = index === 0 ? 1 : 0;
+
+
+      //      client.render();
+      //   });
+      // }, 1000);
+
+      
+
+      window.requestAnimationFrame(render);
+      const currentTime = performance.now();
+      if (currentTime > lastDrawItem + FPS_THROTTLE) {
+        lastDrawItem = currentTime;
+        // rust update call
+        if (
+          window.innerHeight !== canvas.height ||
+          window.innerWidth !== canvas.width
+        ) {
+          canvas.height = window.innerHeight;
+          canvas.clientHeight = window.innerHeight;
+          canvas.style.height = window.innerHeight;
+
+          canvas.width = window.innerWidth;
+          canvas.clientWidth = window.innerWidth;
+          canvas.style.width = window.innerWidth;
+
+          gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+        }
+        let elapsedTime = currentTime - initialTime;
+        // console.log({data})
+        client.update(elapsedTime, window.innerHeight, window.innerWidth, data);
+        client.render();
+      }
     }
     render();
   })

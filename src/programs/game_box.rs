@@ -1,7 +1,8 @@
 use super::super::coordinates as Coordinates;
 use super::super::matrix_equations as Matrix;
 use super::super::webgl_compiler as GLCompiler;
-use crate::objects::game_box::GameBox as GameBox2d;
+use crate::objects::game_box::{GameBox as GameBox2d};
+use crate::objects::matrix_translation::{MatrixtTranslation};
 use js_sys::WebAssembly;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -71,18 +72,12 @@ impl GameBox {
 		canvas_height: f32,
 		canvas_width: f32,
 		box_2d: &GameBox2d,
-		leader: f32,
-	) {
-		let together = format!("LEADER _____ {:?}", leader);
-		log(&together);
-		let new_x_translation = Coordinates::get_x_translation(canvas_width, leader, box_2d.horse_position.distance_covered);
-		let new_y_translation = Coordinates::get_y_translation(canvas_height, box_2d.horse_position.distance_from_inner_lane);
+		xyt:MatrixtTranslation,
 
-		let x_origin_translation = 2. * new_x_translation / canvas_width - 1.; // x translation
-		let y_origin_translation = 2. * new_y_translation / canvas_height - 1.;
+	) {
 
 		let translation_matrix =
-			Matrix::translation_matrix_4x4(x_origin_translation, y_origin_translation, 0.);
+			Matrix::translation_matrix_4x4(xyt.xt, xyt.yt, 0.);
 
 		//
 		let scaling_4d_matrix = Matrix::scaling_matrix_4x4(
@@ -91,8 +86,6 @@ impl GameBox {
 			0.,
 		);
 
-		let together = format!("test colio {:?},{:?} box_2d.position.right={:?} box_2d.position.top={:?} box_2d.position.left={:?} box_2d.position.bottom={:?}",(box_2d.position.right - box_2d.position.left),(box_2d.position.top - box_2d.position.bottom), box_2d.position.right,box_2d.position.top,box_2d.position.left,box_2d.position.bottom );
-		log(&together);
 		let transform_4d_mat = Matrix::mult_matrix_4x4(scaling_4d_matrix, translation_matrix);
 
 		/** add to gl compiler function */
@@ -112,3 +105,7 @@ impl GameBox {
 		gl.draw_arrays(GL::TRIANGLES, 0, (self.rect_vertice_ary_len / 2) as i32);
 	}
 }
+
+// pub fn get_matrix_transformation() -> [f32;16] {
+
+// }
